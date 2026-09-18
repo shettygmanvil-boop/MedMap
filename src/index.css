@@ -1,0 +1,197 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Kalam:wght@400;700&display=swap');
+
+:root {
+  --color-bg: #fdfbf7; /* Warm, paper-like off-white */
+  --color-surface: #ffffff;
+  
+  --color-navy: #0f172a; /* Dark navy for text and borders */
+  --color-text-secondary: #475569;
+  
+  --color-accent: #06b6d4; /* Teal / cyan */
+  --color-verify: #10b981; /* Green */
+  --color-warning: #f59e0b; /* Amber / orange */
+  
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-hand: 'Kalam', cursive;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color-scheme: light;
+  color: var(--color-navy);
+  background-color: var(--color-bg);
+  /* Subtle dot grid pattern */
+  background-image: radial-gradient(var(--color-navy) 0.5px, transparent 0.5px);
+  background-size: 20px 20px;
+  background-position: 0 0;
+  background-attachment: fixed;
+  font-family: var(--font-sans);
+  line-height: 1.6;
+}
+
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* Marquee Banner */
+.marquee-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  pointer-events: none; /* Let clicks pass through */
+  overflow: hidden;
+  display: flex;
+  background-color: var(--color-bg);
+  border-bottom: 2px solid var(--color-navy);
+  box-shadow: 0 3px 0px var(--color-navy);
+  padding: 0.5rem 0;
+}
+
+.marquee-content {
+  display: flex;
+  flex-shrink: 0;
+  animation: marquee 20s linear infinite;
+}
+
+.marquee-content span {
+  font-family: var(--font-hand);
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: var(--color-warning);
+  padding-right: 4rem; /* Spacing between repeating texts */
+  white-space: nowrap;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-content {
+    animation-play-state: paused;
+  }
+}
+
+header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 3rem 0 2rem;
+  margin-bottom: 2rem;
+}
+
+.logo {
+  font-family: var(--font-hand);
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: var(--color-navy);
+  position: relative;
+  display: inline-block;
+  transform: rotate(-2deg);
+}
+
+/* Add a hand-drawn underline to the logo */
+.logo::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: -5%;
+  width: 110%;
+  height: 4px;
+  background-color: var(--color-accent);
+  border-radius: 5px;
+  transform: rotate(2deg);
+}
+
+.hero {
+  text-align: center;
+  margin-bottom: 5rem;
+}
+
+.hero h1 {
+  font-family: var(--font-hand);
+  font-size: 2.5rem;
+  line-height: 1.3;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  color: var(--color-navy);
+}
+
+.hero p {
+  font-size: 1.15rem;
+  color: var(--color-text-secondary);
+  max-width: 750px;
+  margin: 0 auto;
+  line-height: 1.7;
+}
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2.5rem;
+  margin-bottom: 4rem;
+}
+
+/* Card component styles */
+.card {
+  background-color: var(--color-surface);
+  border: 2px solid var(--color-navy);
+  border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+  padding: 2rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 5px 5px 0px rgba(15, 23, 42, 0.2);
+  position: relative;
+}
+
+.card:hover {
+  transform: translateY(-3px) rotate(1deg);
+  box-shadow: 8px 8px 0px rgba(15, 23, 42, 0.2);
+}
+
+.card h3 {
+  font-family: var(--font-hand);
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: var(--color-navy);
+}
+
+.card p {
+  color: var(--color-text-secondary);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+/* Green highlight for Verify card */
+.card.highlight-verify {
+  border-color: var(--color-verify);
+}
+.card.highlight-verify h3 {
+  color: var(--color-verify);
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .hero h1 {
+    font-size: 2rem;
+  }
+  .floating-banner {
+    font-size: 0.95rem;
+    padding: 0.4rem 1rem;
+  }
+}
