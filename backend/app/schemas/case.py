@@ -1,16 +1,34 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from typing import Optional
 from datetime import datetime
+from enum import Enum
+
+
+class CaseStatus(str, Enum):
+    INTAKE = "intake"
+    PATIENT_VERIFYING = "patient_verifying"
+    DOCTOR_REVIEW = "doctor_review"
+    COMPLETED = "completed"
+
 
 class CaseCreate(BaseModel):
     patientId: str
     language: Optional[str] = None
-    consentGranted: Optional[bool] = False
+    consentGranted: bool = False
+
 
 class CaseUpdate(BaseModel):
-    status: Optional[str] = None
+    status: Optional[CaseStatus] = None
     language: Optional[str] = None
     consentGranted: Optional[bool] = None
+
+    @field_validator("status", "consentGranted", mode="before")
+    @classmethod
+    def reject_null_for_non_nullable_fields(cls, value):
+        if value is None:
+            raise ValueError("Field cannot be null")
+        return value
+
 
 class CaseResponse(BaseModel):
     caseId: str
@@ -18,5 +36,5 @@ class CaseResponse(BaseModel):
     createdAt: datetime
     updatedAt: datetime
     language: Optional[str] = None
-    consentGranted: Optional[bool] = False
+    consentGranted: bool = False
     status: str
