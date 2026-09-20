@@ -1,0 +1,73 @@
+import uuid
+from datetime import datetime, timezone
+from sqlalchemy.orm import Session
+from app.schemas.case import CaseCreate, CaseUpdate, CaseResponse
+from app.models.case import ClinicalCase
+from typing import Optional
+
+def create_case(db: Session, data: CaseCreate) -> CaseResponse:
+    case_id = f"case-{uuid.uuid4().hex[:8]}"
+    now = datetime.now(timezone.utc)
+    
+    db_case = ClinicalCase(
+        caseId=case_id,
+        patientId=data.patientId,
+        createdAt=now,
+        updatedAt=now,
+        language=data.language,
+        consentGranted=data.consentGranted,
+        status="intake"
+    )
+    db.add(db_case)
+    db.commit()
+    db.refresh(db_case)
+    
+    return CaseResponse(
+        caseId=db_case.caseId,
+        patientId=db_case.patientId,
+        createdAt=db_case.createdAt,
+        updatedAt=db_case.updatedAt,
+        language=db_case.language,
+        consentGranted=db_case.consentGranted,
+        status=db_case.status
+    )
+
+def get_case(db: Session, case_id: str) -> Optional[CaseResponse]:
+    db_case = db.query(ClinicalCase).filter(ClinicalCase.caseId == case_id).first()
+    if not db_case:
+        return None
+        
+    return CaseResponse(
+        caseId=db_case.caseId,
+        patientId=db_case.patientId,
+        createdAt=db_case.createdAt,
+        updatedAt=db_case.updatedAt,
+        language=db_case.language,
+        consentGranted=db_case.consentGranted,
+        status=db_case.status
+    )
+
+def update_case(db: Session, case_id: str, data: CaseUpdate) -> Optional[CaseResponse]:
+    db_case = db.query(ClinicalCase).filter(ClinicalCase.caseId == case_id).first()
+    if not db_case:
+        return None
+        
+    update_data = data.model_dump(exclude_unset=True)
+    
+    for key, value in update_data.items():
+        setattr(db_case, key, value)
+        
+    db_case.updatedAt = datetime.now(timezone.utc)
+    
+    db.commit()
+    db.refresh(db_case)
+    
+    return CaseResponse(
+        caseId=db_case.caseId,
+        patientId=db_case.patientId,
+        createdAt=db_case.createdAt,
+        updatedAt=db_case.updatedAt,
+        language=db_case.language,
+        consentGranted=db_case.consentGranted,
+        status=db_case.status
+    )
