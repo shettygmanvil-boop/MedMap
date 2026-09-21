@@ -53,6 +53,8 @@ def update_case(db: Session, case_id: str, data: CaseUpdate) -> Optional[CaseRes
         return None
         
     update_data = data.model_dump(exclude_unset=True)
+    if "status" in update_data:
+        update_data["status"] = update_data["status"].value
     
     for key, value in update_data.items():
         setattr(db_case, key, value)
