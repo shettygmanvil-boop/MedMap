@@ -3,6 +3,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useCase } from '../../context/CaseContext';
 import { getCase, updateCaseStatus } from '../../utils/api';
 import type { ClinicalCase } from '../../types/case';
+import { Button } from '../../components/Button';
+import { ErrorMessage } from '../../components/ErrorMessage';
+import { LoadingIndicator } from '../../components/LoadingIndicator';
+import { StatusBadge } from '../../components/StatusBadge';
 
 export function PatientIntakePage() {
   const { caseId } = useCase();
@@ -58,25 +62,29 @@ export function PatientIntakePage() {
       <main style={{ marginTop: '2rem' }}>
         <h2>Intake Chat</h2>
         
-        {error && <div style={{ color: 'red', marginBottom: '1rem' }}>{error}</div>}
+        <ErrorMessage message={error} />
 
         {isLoading ? (
-          <div>Loading case...</div>
+          <LoadingIndicator message="Loading case..." />
         ) : clinicalCase ? (
           <div style={{ padding: '1rem', border: '1px solid #ccc', borderRadius: '4px', maxWidth: '400px' }}>
             <h3>Case Details</h3>
             <p><strong>Case ID:</strong> {clinicalCase.caseId}</p>
             <p><strong>Patient ID:</strong> {clinicalCase.patientId}</p>
             <p><strong>Language:</strong> {clinicalCase.language || 'N/A'}</p>
-            <p><strong>Status:</strong> {clinicalCase.status}</p>
+            <p style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.5rem 0' }}>
+              <strong>Status:</strong> <StatusBadge status={clinicalCase.status} />
+            </p>
 
-            <button 
+            <Button
+              variant="success"
               onClick={handleStatusUpdate}
               disabled={isUpdating || clinicalCase.status === 'patient_verifying'}
-              style={{ marginTop: '1rem', padding: '0.5rem 1rem', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+              isLoading={isUpdating}
+              style={{ marginTop: '1rem' }}
             >
               {isUpdating ? 'Updating case...' : 'Move to Verification'}
-            </button>
+            </Button>
           </div>
         ) : (
           <div>Case not found.</div>

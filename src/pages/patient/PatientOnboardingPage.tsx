@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCase } from '../../context/CaseContext';
 import { createCase } from '../../utils/api';
+import { Button } from '../../components/Button';
+import { ErrorMessage } from '../../components/ErrorMessage';
 
 export function PatientOnboardingPage() {
   const [patientId, setPatientId] = useState('');
@@ -37,7 +39,7 @@ export function PatientOnboardingPage() {
         <h2>Welcome to MedMap</h2>
         <p>Please enter your details to start.</p>
         
-        {error && <div style={{ color: 'red', marginBottom: '1rem' }}>{error}</div>}
+        <ErrorMessage message={error} />
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
@@ -65,13 +67,14 @@ export function PatientOnboardingPage() {
               <option value="French">French</option>
             </select>
           </div>
-          <button 
+          <Button
             type="submit" 
+            isLoading={isLoading}
             disabled={isLoading}
-            style={{ padding: '0.75rem', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+            style={{ width: '100%' }}
           >
             {isLoading ? 'Creating case...' : 'Start Intake'}
-          </button>
+          </Button>
         </form>
       </main>
     </div>
