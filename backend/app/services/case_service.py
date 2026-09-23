@@ -29,7 +29,8 @@ def create_case(db: Session, data: CaseCreate) -> CaseResponse:
         updatedAt=db_case.updatedAt,
         language=db_case.language,
         consentGranted=db_case.consentGranted,
-        status=db_case.status
+        status=db_case.status,
+        intakeAnswers=db_case.intakeAnswers
     )
 
 def get_case(db: Session, case_id: str) -> Optional[CaseResponse]:
@@ -44,7 +45,8 @@ def get_case(db: Session, case_id: str) -> Optional[CaseResponse]:
         updatedAt=db_case.updatedAt,
         language=db_case.language,
         consentGranted=db_case.consentGranted,
-        status=db_case.status
+        status=db_case.status,
+        intakeAnswers=db_case.intakeAnswers
     )
 
 def update_case(db: Session, case_id: str, data: CaseUpdate) -> Optional[CaseResponse]:
@@ -71,5 +73,6 @@ def update_case(db: Session, case_id: str, data: CaseUpdate) -> Optional[CaseRes
         updatedAt=db_case.updatedAt,
         language=db_case.language,
         consentGranted=db_case.consentGranted,
-        status=db_case.status
+        status=db_case.status,
+        intakeAnswers=db_case.intakeAnswers
     )

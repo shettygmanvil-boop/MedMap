@@ -34,6 +34,26 @@ class CaseSchemaTests(unittest.TestCase):
     def test_omitted_update_fields_are_accepted(self):
         self.assertEqual(CaseUpdate().model_dump(exclude_unset=True), {})
 
+    def test_valid_intake_answers_are_accepted(self):
+        answers = {
+            "chiefComplaint": "Headache",
+            "duration": "2 days",
+        }
+        self.assertEqual(CaseUpdate(intakeAnswers=answers).intakeAnswers, answers)
+
+    def test_null_intake_answers_are_accepted(self):
+        self.assertIsNone(CaseUpdate(intakeAnswers=None).intakeAnswers)
+
+    def test_invalid_intake_answer_shapes_are_rejected(self):
+        invalid_values = (
+            ["Headache"],
+            {"chiefComplaint": {"value": "Headache"}},
+            {"duration": 2},
+        )
+        for value in invalid_values:
+            with self.subTest(value=value), self.assertRaises(ValidationError):
+                CaseUpdate(intakeAnswers=value)
+
     def test_null_language_is_accepted(self):
         self.assertEqual(
             CaseUpdate(language=None).model_dump(exclude_unset=True),
@@ -84,6 +104,7 @@ class CaseServiceTests(unittest.TestCase):
             case_id = created.caseId
             self.assertEqual(created.status, "intake")
             self.assertFalse(created.consentGranted)
+            self.assertIsNone(created.intakeAnswers)
 
         with self.Session() as session:
             retrieved = case_service.get_case(session, case_id)
@@ -111,6 +132,56 @@ class CaseServiceTests(unittest.TestCase):
             self.assertEqual(persisted.language, "Hindi")
             self.assertTrue(persisted.consentGranted)
             self.assertEqual(persisted.status, "patient_verifying")
+
+    def test_intake_answers_persist_preserve_and_clear(self):
+        answers = {
+            "chiefComplaint": "Headache",
+            "duration": "2 days",
+        }
+
+        with self.Session() as session:
+            created = case_service.create_case(
+                session,
+                CaseCreate(patientId="patient-answers"),
+            )
+            case_id = created.caseId
+            self.assertIsNone(created.intakeAnswers)
+
+            updated = case_service.update_case(
+                session,
+                case_id,
+                CaseUpdate(intakeAnswers=answers),
+            )
+            self.assertEqual(updated.intakeAnswers, answers)
+
+            retrieved = case_service.get_case(session, case_id)
+            self.assertEqual(retrieved.intakeAnswers, answers)
+
+        with self.Session() as session:
+            persisted = case_service.get_case(session, case_id)
+            self.assertEqual(persisted.intakeAnswers, answers)
+
+            language_updated = case_service.update_case(
+                session,
+                case_id,
+                CaseUpdate(language="Hindi"),
+            )
+            self.assertEqual(language_updated.language, "Hindi")
+            self.assertEqual(language_updated.intakeAnswers, answers)
+
+        with self.Session() as session:
+            preserved = case_service.get_case(session, case_id)
+            self.assertEqual(preserved.intakeAnswers, answers)
+
+            cleared = case_service.update_case(
+                session,
+                case_id,
+                CaseUpdate(intakeAnswers=None),
+            )
+            self.assertIsNone(cleared.intakeAnswers)
+
+        with self.Session() as session:
+            self.assertIsNone(case_service.get_case(session, case_id).intakeAnswers)
 
     def test_missing_case_returns_none(self):
         with self.Session() as session:
