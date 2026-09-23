@@ -1,7 +1,7 @@
 import React from 'react';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'success' | 'outline';
+  variant?: 'primary' | 'success' | 'outline' | 'danger';
   isLoading?: boolean;
 }
 
@@ -16,7 +16,7 @@ export const Button: React.FC<ButtonProps> = ({
 }) => {
   const isDisabled = disabled || isLoading;
 
-  const variantStyles: Record<'primary' | 'success' | 'outline', React.CSSProperties> = {
+  const variantStyles: Record<'primary' | 'success' | 'outline' | 'danger', React.CSSProperties> = {
     primary: {
       backgroundColor: 'var(--color-navy)',
       color: 'var(--color-surface)',
@@ -30,6 +30,11 @@ export const Button: React.FC<ButtonProps> = ({
     outline: {
       backgroundColor: 'var(--color-surface)',
       color: 'var(--color-navy)',
+      border: '2px solid var(--color-navy)',
+    },
+    danger: {
+      backgroundColor: '#ef4444',
+      color: 'var(--color-surface)',
       border: '2px solid var(--color-navy)',
     },
   };
