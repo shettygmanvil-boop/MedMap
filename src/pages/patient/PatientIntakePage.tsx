@@ -38,6 +38,25 @@ export function PatientIntakePage() {
     try {
       const data = await getCase(caseId);
       setClinicalCase(data);
+      
+      if (data.status !== 'intake') {
+        setCurrentIndex(INTAKE_QUESTIONS.length);
+      } else {
+        const loadedAnswers = data.intakeAnswers || {};
+        setAnswers(loadedAnswers);
+        
+        let nextIndex = 0;
+        for (let i = 0; i < INTAKE_QUESTIONS.length; i++) {
+          if (!(INTAKE_QUESTIONS[i].id in loadedAnswers)) {
+            nextIndex = i;
+            break;
+          }
+          if (i === INTAKE_QUESTIONS.length - 1) {
+            nextIndex = INTAKE_QUESTIONS.length;
+          }
+        }
+        setCurrentIndex(nextIndex);
+      }
     } catch {
       setError("We couldn't load your case. Please check your connection and try again.");
     } finally {

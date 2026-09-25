@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCase } from '../../context/CaseContext';
 import { createCase } from '../../utils/api';
@@ -12,6 +12,11 @@ export function PatientOnboardingPage() {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { setCaseId } = useCase();
+
+  useEffect(() => {
+    // Clear any stale active case when starting a fresh onboarding session
+    setCaseId(null);
+  }, [setCaseId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
