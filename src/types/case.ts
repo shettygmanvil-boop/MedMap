@@ -8,4 +8,5 @@ export interface ClinicalCase {
   language?: string;
   consentGranted?: boolean;
   status: CaseStatus;
+  intakeAnswers?: Record<string, string>;
 }
