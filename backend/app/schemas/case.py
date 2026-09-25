@@ -1,5 +1,5 @@
 from pydantic import BaseModel, field_validator
-from typing import Optional
+from typing import Dict, Optional
 from datetime import datetime
 from enum import Enum
 
@@ -21,6 +21,7 @@ class CaseUpdate(BaseModel):
     status: Optional[CaseStatus] = None
     language: Optional[str] = None
     consentGranted: Optional[bool] = None
+    intakeAnswers: Optional[Dict[str, str]] = None
 
     @field_validator("status", "consentGranted", mode="before")
     @classmethod
@@ -38,3 +39,4 @@ class CaseResponse(BaseModel):
     language: Optional[str] = None
     consentGranted: bool = False
     status: str
+    intakeAnswers: Optional[Dict[str, str]] = None
