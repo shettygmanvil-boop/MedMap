@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException, Depends
+from typing import List, Optional
+from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlalchemy.orm import Session
-from app.schemas.case import CaseCreate, CaseUpdate, CaseResponse
+from app.schemas.case import CaseCreate, CaseUpdate, CaseResponse, CaseStatus
 from app.services import case_service
 from app.core.database import get_db
 from fastapi import UploadFile, File
@@ -13,6 +14,12 @@ router = APIRouter()
 @router.post("/", response_model=CaseResponse, status_code=201)
 def create_case(case_in: CaseCreate, db: Session = Depends(get_db)):
     return case_service.create_case(db, case_in)
+
+@router.get("", response_model=List[CaseResponse])
+@router.get("/", response_model=List[CaseResponse])
+def get_cases(status: Optional[CaseStatus] = Query(None), db: Session = Depends(get_db)):
+    status_val = status.value if status else None
+    return case_service.get_cases(db, status=status_val)
 
 @router.get("/{case_id}", response_model=CaseResponse)
 def get_case(case_id: str, db: Session = Depends(get_db)):

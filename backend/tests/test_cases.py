@@ -194,6 +194,37 @@ class CaseServiceTests(unittest.TestCase):
                 )
             )
 
+    def test_get_cases_empty(self):
+        with self.Session() as session:
+            self.assertEqual(case_service.get_cases(session), [])
+
+    def test_get_cases_returns_all_ordered_by_newest(self):
+        import time
+        with self.Session() as session:
+            case1 = case_service.create_case(session, CaseCreate(patientId="p1"))
+            time.sleep(0.01)
+            case2 = case_service.create_case(session, CaseCreate(patientId="p2"))
+            
+            cases = case_service.get_cases(session)
+            self.assertEqual(len(cases), 2)
+            self.assertEqual(cases[0].caseId, case2.caseId)
+            self.assertEqual(cases[1].caseId, case1.caseId)
+
+    def test_get_cases_with_status_filter(self):
+        with self.Session() as session:
+            case1 = case_service.create_case(session, CaseCreate(patientId="p1"))
+            case2 = case_service.create_case(session, CaseCreate(patientId="p2"))
+            case_service.update_case(session, case2.caseId, CaseUpdate(status="completed"))
+            
+            intake_cases = case_service.get_cases(session, status="intake")
+            completed_cases = case_service.get_cases(session, status="completed")
+            
+            self.assertEqual(len(intake_cases), 1)
+            self.assertEqual(intake_cases[0].caseId, case1.caseId)
+            
+            self.assertEqual(len(completed_cases), 1)
+            self.assertEqual(completed_cases[0].caseId, case2.caseId)
+
 
 if __name__ == "__main__":
     unittest.main()

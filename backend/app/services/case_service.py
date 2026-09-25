@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from app.schemas.case import CaseCreate, CaseUpdate, CaseResponse
 from app.models.case import ClinicalCase
-from typing import Optional
+from typing import Optional, List
 
 def create_case(db: Session, data: CaseCreate) -> CaseResponse:
     case_id = f"case-{uuid.uuid4().hex[:8]}"
@@ -76,3 +76,23 @@ def update_case(db: Session, case_id: str, data: CaseUpdate) -> Optional[CaseRes
         status=db_case.status,
         intakeAnswers=db_case.intakeAnswers
     )
+
+def get_cases(db: Session, status: Optional[str] = None) -> List[CaseResponse]:
+    query = db.query(ClinicalCase)
+    if status:
+        query = query.filter(ClinicalCase.status == status)
+    
+    db_cases = query.order_by(ClinicalCase.createdAt.desc()).all()
+    
+    return [
+        CaseResponse(
+            caseId=c.caseId,
+            patientId=c.patientId,
+            createdAt=c.createdAt,
+            updatedAt=c.updatedAt,
+            language=c.language,
+            consentGranted=c.consentGranted,
+            status=c.status,
+            intakeAnswers=c.intakeAnswers
+        ) for c in db_cases
+    ]
