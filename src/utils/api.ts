@@ -78,3 +78,11 @@ export const getCases = async (): Promise<ClinicalCase[]> => {
   }
   return response.json();
 };
+
+export const getCaseDocuments = async (caseId: string): Promise<any[]> => {
+  const response = await fetch(`${API_BASE_URL}/cases/${caseId}/documents`);
+  if (!response.ok) {
+    throw new Error('Failed to load case documents');
+  }
+  return response.json();
+};

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { DoctorCaseStatusBadge } from '../../components/doctor/DoctorCaseStatusBadge';
 import { DoctorSectionCard } from '../../components/doctor/DoctorSectionCard';
-import { getCase } from '../../utils/api';
+import { getCase, getCaseDocuments } from '../../utils/api';
 import type { ClinicalCase } from '../../types/case';
 import { ErrorMessage } from '../../components/ErrorMessage';
 import '../../components/doctor/doctorDashboard.css';
@@ -11,6 +11,7 @@ import '../../components/doctor/doctorDetail.css';
 export function DoctorCaseDetailPage() {
   const { caseId } = useParams<{ caseId: string }>();
   const [caseDetail, setCaseDetail] = useState<ClinicalCase | null>(null);
+  const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,8 +24,12 @@ export function DoctorCaseDetailPage() {
 
     const fetchCase = async () => {
       try {
-        const data = await getCase(caseId);
+        const [data, docs] = await Promise.all([
+          getCase(caseId),
+          getCaseDocuments(caseId).catch(() => []) // Fallback to empty array if docs fail
+        ]);
         setCaseDetail(data);
+        setDocuments(docs);
       } catch (err: any) {
         setError(err.message || 'Case Record Not Found');
       } finally {
@@ -156,6 +161,34 @@ export function DoctorCaseDetailPage() {
               <p className="empty-desc">The patient has not completed the intake questionnaire.</p>
             </div>
           )}
+
+          <div style={{ marginTop: '2rem' }}>
+            <DoctorSectionCard title="Uploaded Documents" tag={`${documents.length} Files`}>
+              {documents.length > 0 ? (
+                <div className="history-subsection">
+                  {documents.map((doc, i) => (
+                    <div key={i} style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: i < documents.length - 1 ? '1px solid var(--color-border-subtle)' : 'none' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                        <span style={{ fontSize: '1.2rem' }}>📄</span>
+                        <h3 className="history-subheading" style={{ margin: 0, fontWeight: 600 }}>{doc.filename}</h3>
+                      </div>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginLeft: '1.7rem' }}>
+                        <span>{(doc.sizeBytes / 1024).toFixed(1)} KB</span> • 
+                        <span style={{ marginLeft: '0.5rem' }}>{doc.mimeType}</span> • 
+                        <span style={{ marginLeft: '0.5rem' }}>Uploaded: {new Date(doc.createdAt).toLocaleString()}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="doctor-empty-state" style={{ margin: '1rem 0' }}>
+                  <span className="empty-icon">📂</span>
+                  <h3 className="empty-title">No Documents Uploaded</h3>
+                  <p className="empty-desc">The patient has not provided any supporting medical files.</p>
+                </div>
+              )}
+            </DoctorSectionCard>
+          </div>
         </div>
 
         {/* Right Column: Physician Review Panel & Sidebar Summary */}

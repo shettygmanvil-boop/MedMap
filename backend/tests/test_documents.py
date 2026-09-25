@@ -11,7 +11,7 @@ from fastapi import UploadFile
 from app.models.base import Base
 from app.models.case import ClinicalCase
 from app.models.document import PatientDocument
-from app.services.document_service import upload_document
+from app.services.document_service import upload_document, get_documents
 from datetime import datetime, timezone
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
@@ -104,3 +104,20 @@ class DocumentTests(unittest.TestCase):
                 upload_document(self.db, "test-case", file)
                 
             self.assertEqual(len(os.listdir("uploads")), 0)
+
+    def test_get_documents(self):
+        file_content1 = b"fake pdf 1"
+        file1 = self.create_upload_file("test1.pdf", file_content1, "application/pdf")
+        upload_document(self.db, "test-case", file1)
+        
+        file_content2 = b"fake pdf 2"
+        file2 = self.create_upload_file("test2.pdf", file_content2, "application/pdf")
+        upload_document(self.db, "test-case", file2)
+        
+        docs = get_documents(self.db, "test-case")
+        self.assertEqual(len(docs), 2)
+        self.assertEqual(docs[0].filename, "test2.pdf") # desc order
+        self.assertEqual(docs[1].filename, "test1.pdf")
+        
+        docs_empty = get_documents(self.db, "missing-case")
+        self.assertEqual(len(docs_empty), 0)

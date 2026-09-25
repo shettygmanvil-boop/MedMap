@@ -38,3 +38,10 @@ def update_case(case_id: str, case_in: CaseUpdate, db: Session = Depends(get_db)
 @router.post("/{case_id}/documents", response_model=DocumentResponse, status_code=201)
 def upload_case_document(case_id: str, file: UploadFile = File(...), db: Session = Depends(get_db)):
     return document_service.upload_document(db, case_id, file)
+
+@router.get("/{case_id}/documents", response_model=List[DocumentResponse])
+def get_case_documents(case_id: str, db: Session = Depends(get_db)):
+    case = case_service.get_case(db, case_id)
+    if not case:
+        raise HTTPException(status_code=404, detail="Case not found")
+    return document_service.get_documents(db, case_id)

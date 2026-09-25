@@ -80,3 +80,16 @@ def upload_document(db: Session, case_id: str, file: UploadFile) -> DocumentResp
         sizeBytes=db_doc.sizeBytes,
         createdAt=db_doc.createdAt
     )
+
+def get_documents(db: Session, case_id: str) -> list[DocumentResponse]:
+    docs = db.query(PatientDocument).filter(PatientDocument.caseId == case_id).order_by(PatientDocument.createdAt.desc()).all()
+    return [
+        DocumentResponse(
+            id=d.id,
+            caseId=d.caseId,
+            filename=d.filename,
+            mimeType=d.mimeType,
+            sizeBytes=d.sizeBytes,
+            createdAt=d.createdAt
+        ) for d in docs
+    ]
