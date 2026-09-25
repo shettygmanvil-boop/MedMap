@@ -3,6 +3,9 @@ from sqlalchemy.orm import Session
 from app.schemas.case import CaseCreate, CaseUpdate, CaseResponse
 from app.services import case_service
 from app.core.database import get_db
+from fastapi import UploadFile, File
+from app.schemas.document import DocumentResponse
+from app.services import document_service
 
 router = APIRouter()
 
@@ -24,3 +27,7 @@ def update_case(case_id: str, case_in: CaseUpdate, db: Session = Depends(get_db)
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
     return case
+
+@router.post("/{case_id}/documents", response_model=DocumentResponse, status_code=201)
+def upload_case_document(case_id: str, file: UploadFile = File(...), db: Session = Depends(get_db)):
+    return document_service.upload_document(db, case_id, file)
