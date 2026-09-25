@@ -1,25 +1,54 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { MOCK_DOCTOR_CASES, calculateCaseCounts } from '../../components/doctor/mockCases';
-import { DoctorCaseSummary, type CaseFilter } from '../../components/doctor/DoctorCaseSummary';
+import { DoctorCaseSummary, type CaseFilter, type CaseCounts } from '../../components/doctor/DoctorCaseSummary';
 import { DoctorCaseFilters } from '../../components/doctor/DoctorCaseFilters';
 import { DoctorCaseCard } from '../../components/doctor/DoctorCaseCard';
+import { getCases } from '../../utils/api';
+import type { ClinicalCase } from '../../types/case';
+import { ErrorMessage } from '../../components/ErrorMessage';
 import '../../components/doctor/doctorDashboard.css';
+
+function calculateCaseCounts(cases: ClinicalCase[]): CaseCounts {
+  return {
+    total: cases.length,
+    doctorReview: cases.filter((c) => c.status === 'doctor_review').length,
+    inProgress: cases.filter((c) => c.status === 'intake' || c.status === 'patient_verifying').length,
+    completed: cases.filter((c) => c.status === 'completed').length,
+  };
+}
 
 export function DoctorCasesPage() {
   const [activeFilter, setActiveFilter] = useState<CaseFilter>('all');
+  const [cases, setCases] = useState<ClinicalCase[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const counts = useMemo(() => calculateCaseCounts(MOCK_DOCTOR_CASES), []);
+  useEffect(() => {
+    const fetchCases = async () => {
+      try {
+        const data = await getCases();
+        setCases(data);
+        setError(null);
+      } catch (err: any) {
+        setError(err.message || 'Failed to load cases.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCases();
+  }, []);
+
+  const counts = useMemo(() => calculateCaseCounts(cases), [cases]);
 
   const filteredCases = useMemo(() => {
-    return MOCK_DOCTOR_CASES.filter((c) => {
+    return cases.filter((c) => {
       if (activeFilter === 'all') return true;
       if (activeFilter === 'doctor_review') return c.status === 'doctor_review';
       if (activeFilter === 'in_progress') return c.status === 'intake' || c.status === 'patient_verifying';
       if (activeFilter === 'completed') return c.status === 'completed';
       return true;
     });
-  }, [activeFilter]);
+  }, [cases, activeFilter]);
 
   return (
     <div className="doctor-dashboard-container">
@@ -50,15 +79,13 @@ export function DoctorCasesPage() {
         </div>
       </header>
 
-      {/* Demonstration Notice */}
-      <div className="doctor-demo-banner" role="status" aria-live="polite">
-        <span className="demo-banner-tag">Demo Mode</span>
-        <span>
-          Displaying synthetic pre-consultation cases for demonstration only. No real patient data or clinical triage scores are represented.
-        </span>
-      </div>
-
       <main>
+        {error && (
+          <div style={{ padding: '0 2rem' }}>
+            <ErrorMessage message={error} onDismiss={() => setError(null)} />
+          </div>
+        )}
+
         {/* Case Metrics Summary */}
         <DoctorCaseSummary
           counts={counts}
@@ -83,11 +110,16 @@ export function DoctorCasesPage() {
               {activeFilter === 'completed' && 'Completed Cases'}
             </h2>
             <span className="cases-count-label">
-              Showing {filteredCases.length} of {MOCK_DOCTOR_CASES.length} cases
+              Showing {filteredCases.length} of {cases.length} cases
             </span>
           </div>
 
-          {filteredCases.length > 0 ? (
+          {loading ? (
+            <div className="doctor-empty-state" role="status" aria-live="polite">
+              <span className="spinner" style={{ borderTopColor: 'var(--color-primary)' }}></span>
+              <h3 className="empty-title">Loading Cases...</h3>
+            </div>
+          ) : filteredCases.length > 0 ? (
             <div className="cases-list-grid">
               {filteredCases.map((caseItem) => (
                 <DoctorCaseCard key={caseItem.caseId} caseItem={caseItem} />
@@ -114,3 +146,4 @@ export function DoctorCasesPage() {
     </div>
   );
 }
+

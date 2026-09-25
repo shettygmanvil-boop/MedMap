@@ -1,5 +1,10 @@
 import React from 'react';
-import type { CaseCounts } from './mockCases';
+export interface CaseCounts {
+  total: number;
+  doctorReview: number;
+  inProgress: number;
+  completed: number;
+}
 
 export type CaseFilter = 'all' | 'doctor_review' | 'in_progress' | 'completed';
 

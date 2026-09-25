@@ -1,6 +1,5 @@
 import React from 'react';
-import type { CaseFilter } from './DoctorCaseSummary';
-import type { CaseCounts } from './mockCases';
+import type { CaseFilter, CaseCounts } from './DoctorCaseSummary';
 
 interface DoctorCaseFiltersProps {
   activeFilter: CaseFilter;

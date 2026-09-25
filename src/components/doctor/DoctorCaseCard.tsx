@@ -1,11 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import type { DoctorCaseSummaryItem } from './mockCases';
+import type { ClinicalCase } from '../../types/case';
 import { DoctorCaseStatusBadge } from './DoctorCaseStatusBadge';
-import { DoctorCasePriorityBadge } from './DoctorCasePriorityBadge';
 
 interface DoctorCaseCardProps {
-  caseItem: DoctorCaseSummaryItem;
+  caseItem: ClinicalCase;
 }
 
 export const DoctorCaseCard: React.FC<DoctorCaseCardProps> = ({ caseItem }) => {
@@ -22,47 +21,22 @@ export const DoctorCaseCard: React.FC<DoctorCaseCardProps> = ({ caseItem }) => {
       <div className="case-card-header">
         <div className="case-id-group">
           <span className="case-id-tag">{caseItem.caseId}</span>
-          <h3 id={`case-title-${caseItem.caseId}`} className="case-patient-name">
-            {caseItem.patientDisplayName}
+          <h3 id={`case-title-${caseItem.caseId}`} className="case-patient-name" style={{ fontSize: '1.1rem', margin: 0 }}>
+            Patient ID: {caseItem.patientId}
           </h3>
         </div>
         <div className="case-badges">
-          <DoctorCasePriorityBadge priority={caseItem.demoPriority} />
           <DoctorCaseStatusBadge status={caseItem.status} />
         </div>
       </div>
 
-      <div className="case-demographics">
-        <span>Age: {caseItem.age}</span>
-        <span className="separator">•</span>
-        <span>Gender: {caseItem.gender}</span>
-        <span className="separator">•</span>
-        <span>Language: {caseItem.preferredLanguage}</span>
-        <span className="separator">•</span>
-        <span>ID: {caseItem.patientId}</span>
+      <div className="case-demographics" style={{ marginTop: '0.75rem', fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>
+        {caseItem.language && <span>Language: {caseItem.language}</span>}
       </div>
 
-      <p className="case-summary-text">{caseItem.intakeSummary}</p>
-
-      <div className="case-meta-row">
+      <div className="case-meta-row" style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div className="case-meta-indicators">
-          {caseItem.hasPatientVerified ? (
-            <span className="meta-pill verified" title="Patient reviewed compiled information">
-              <span aria-hidden="true">✓</span> Patient Verified
-            </span>
-          ) : (
-            <span className="meta-pill unverified" title="Patient has not yet verified">
-              Pending Verification
-            </span>
-          )}
-
-          {caseItem.documentsCount > 0 && (
-            <span className="meta-pill docs">
-              {caseItem.documentsCount} {caseItem.documentsCount === 1 ? 'Doc' : 'Docs'} Uploaded
-            </span>
-          )}
-
-          <span className="meta-date" title="Last Updated">
+          <span className="meta-date" title="Last Updated" style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
             Updated: {formattedDate}
           </span>
         </div>
@@ -71,7 +45,7 @@ export const DoctorCaseCard: React.FC<DoctorCaseCardProps> = ({ caseItem }) => {
           <Link
             to={`/doctor/cases/${caseItem.caseId}`}
             className="btn-open-case"
-            aria-label={`Open pre-consultation brief for case ${caseItem.caseId}, patient ${caseItem.patientDisplayName}`}
+            aria-label={`Open pre-consultation brief for case ${caseItem.caseId}, patient ${caseItem.patientId}`}
           >
             Open Case Brief →
           </Link>
@@ -80,4 +54,3 @@ export const DoctorCaseCard: React.FC<DoctorCaseCardProps> = ({ caseItem }) => {
     </article>
   );
 };
-
