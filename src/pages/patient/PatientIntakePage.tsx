@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCase } from '../../context/CaseContext';
-import { getCase } from '../../utils/api';
+import { getCase, updateCase } from '../../utils/api';
 import type { ClinicalCase } from '../../types/case';
 import { Button } from '../../components/Button';
 import { ErrorMessage } from '../../components/ErrorMessage';
@@ -23,6 +23,7 @@ export function PatientIntakePage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [currentAnswer, setCurrentAnswer] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
 
@@ -60,19 +61,33 @@ export function PatientIntakePage() {
   }, [currentIndex, isLoading, error, isComplete]);
 
   // ── Handlers ──────────────────────────────────────────────────────────
-  const handleContinue = () => {
-    if (!currentQuestion) return;
-    setAnswers((prev) => ({ ...prev, [currentQuestion.id]: currentAnswer }));
-    setCurrentAnswer('');
-    setCurrentIndex((prev) => prev + 1);
+  const handleAnswerSubmit = async (answerValue: string) => {
+    if (!currentQuestion || !caseId) return;
+    
+    const newAnswers = { ...answers, [currentQuestion.id]: answerValue };
+    
+    if (currentIndex === INTAKE_QUESTIONS.length - 1) {
+      setIsSubmitting(true);
+      setError(null);
+      try {
+        await updateCase(caseId, { intakeAnswers: newAnswers });
+        setAnswers(newAnswers);
+        setCurrentAnswer('');
+        setCurrentIndex((prev) => prev + 1);
+      } catch (err) {
+        setError('Failed to save your answers. Please try again.');
+      } finally {
+        setIsSubmitting(false);
+      }
+    } else {
+      setAnswers(newAnswers);
+      setCurrentAnswer('');
+      setCurrentIndex((prev) => prev + 1);
+    }
   };
 
-  const handleSkip = () => {
-    if (!currentQuestion) return;
-    setAnswers((prev) => ({ ...prev, [currentQuestion.id]: '' }));
-    setCurrentAnswer('');
-    setCurrentIndex((prev) => prev + 1);
-  };
+  const handleContinue = () => handleAnswerSubmit(currentAnswer);
+  const handleSkip = () => handleAnswerSubmit('');
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     // Allow Enter to submit on single-line text inputs (not textarea)
@@ -91,11 +106,11 @@ export function PatientIntakePage() {
   if (!caseId) return null;
 
   // ── Loading state ─────────────────────────────────────────────────────
-  if (isLoading) {
+  if (isLoading || isSubmitting) {
     return (
       <div className="container">
         <div className="intake-page">
-          <LoadingIndicator message="Loading your intake…" />
+          <LoadingIndicator message={isSubmitting ? "Saving your answers…" : "Loading your intake…"} />
         </div>
       </div>
     );

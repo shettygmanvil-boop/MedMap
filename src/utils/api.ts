@@ -29,12 +29,16 @@ export const getCase = async (caseId: string): Promise<ClinicalCase> => {
 };
 
 export const updateCaseStatus = async (caseId: string, status: string): Promise<ClinicalCase> => {
+  return updateCase(caseId, { status: status as any });
+};
+
+export const updateCase = async (caseId: string, data: Partial<ClinicalCase>): Promise<ClinicalCase> => {
   const response = await fetch(`${API_BASE_URL}/cases/${caseId}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ status }),
+    body: JSON.stringify(data),
   });
 
   if (!response.ok) {
