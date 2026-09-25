@@ -1,6 +1,8 @@
 import { useState, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCase } from '../../context/CaseContext';
+import { uploadDocument } from '../../utils/api';
+import { ErrorMessage } from '../../components/ErrorMessage';
 
 // Max file size: 10 MB
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
@@ -22,7 +24,6 @@ export function PatientDocumentsPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [status, setStatus] = useState<DocumentStatus>('idle');
   const [error, setError] = useState<string | null>(null);
-  const [progress, setProgress] = useState<number>(0);
   const [dragActive, setDragActive] = useState<boolean>(false);
 
   const formatFileSize = (bytes: number): string => {
@@ -68,7 +69,6 @@ export function PatientDocumentsPage() {
 
     setSelectedFile(file);
     setStatus('selected');
-    setProgress(0);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -112,33 +112,28 @@ export function PatientDocumentsPage() {
     }
   };
 
-  const handleStartProcessing = () => {
-    if (!selectedFile) return;
+  const handleStartProcessing = async () => {
+    if (!selectedFile || !caseId) {
+      if (!caseId) setError("No active case ID found. Please restart intake.");
+      return;
+    }
 
     setStatus('processing');
-    setProgress(0);
     setError(null);
 
-    // Simulated deterministic timer steps (0% -> 35% -> 70% -> 100% over 1.8s)
-    let currentProgress = 0;
-    const interval = setInterval(() => {
-      currentProgress += 35;
-      if (currentProgress >= 100) {
-        currentProgress = 100;
-        clearInterval(interval);
-        setProgress(100);
-        setStatus('success');
-      } else {
-        setProgress(currentProgress);
-      }
-    }, 450);
+    try {
+      await uploadDocument(caseId, selectedFile);
+      setStatus('success');
+    } catch (err: any) {
+      setError(err.message || "An unexpected error occurred during upload.");
+      setStatus('selected'); // Revert back so user can try again or remove
+    }
   };
 
   const handleRemove = () => {
     setSelectedFile(null);
     setStatus('idle');
     setError(null);
-    setProgress(0);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -186,21 +181,10 @@ export function PatientDocumentsPage() {
 
           {/* Error Banner */}
           {error && (
-            <div className="doc-alert doc-alert-error" role="alert" aria-live="assertive">
-              <span style={{ fontSize: '1.2rem' }}>⚠️</span>
-              <div style={{ flex: 1 }}>
-                <strong>Validation Error</strong>
-                <div style={{ marginTop: '0.2rem' }}>{error}</div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setError(null)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold', color: 'inherit' }}
-                aria-label="Dismiss error"
-              >
-                ✕
-              </button>
-            </div>
+            <ErrorMessage 
+              message={error} 
+              onDismiss={() => setError(null)} 
+            />
           )}
 
           {/* Hidden File Input */}
@@ -288,7 +272,7 @@ export function PatientDocumentsPage() {
                   )}
                   {status === 'processing' && (
                     <span className="doc-badge doc-badge-processing">
-                      <span className="spinner"></span> Processing ({progress}%)
+                      <span className="spinner"></span> Uploading...
                     </span>
                   )}
                   {status === 'success' && (
@@ -302,7 +286,7 @@ export function PatientDocumentsPage() {
               {/* Progress bar during simulated processing */}
               {status === 'processing' && (
                 <div className="doc-progress-container">
-                  <div className="doc-progress-bar" style={{ width: `${progress}%` }}></div>
+                  <div className="doc-progress-bar" style={{ width: '100%', animation: 'pulse 1.5s infinite' }}></div>
                 </div>
               )}
 
@@ -311,9 +295,9 @@ export function PatientDocumentsPage() {
                 <div className="doc-alert doc-alert-success" style={{ marginTop: '1.25rem', marginBottom: '0' }} role="status">
                   <span style={{ fontSize: '1.2rem' }}>✅</span>
                   <div>
-                    <strong>Prototype Processing Complete</strong>
+                    <strong>Upload Complete</strong>
                     <div style={{ marginTop: '0.2rem', fontSize: '0.9rem' }}>
-                      Document file structure was validated locally. No medical data extraction was performed.
+                      Document has been successfully uploaded and securely stored.
                     </div>
                   </div>
                 </div>
@@ -328,7 +312,7 @@ export function PatientDocumentsPage() {
                       className="doc-btn doc-btn-accent"
                       onClick={handleStartProcessing}
                     >
-                      ⚙️ Process Document
+                      ⚙️ Upload Document
                     </button>
 
                     <button
@@ -343,7 +327,7 @@ export function PatientDocumentsPage() {
 
                 {status === 'processing' && (
                   <div style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)', fontStyle: 'italic' }}>
-                    Simulating document ingestion... Please wait.
+                    Uploading securely to server... Please wait.
                   </div>
                 )}
 
@@ -372,7 +356,7 @@ export function PatientDocumentsPage() {
 
           {/* Prototype Scope Note */}
           <div className="doc-prototype-notice">
-            ℹ️ <strong>MedMap Prototype Notice:</strong> Document processing is simulated locally in this preview version. Real OCR extraction and backend file storage are intentionally disabled for Day-1 frontend intake demonstration.
+            ℹ️ <strong>MedMap Upload Notice:</strong> Documents are securely uploaded. OCR extraction is intentionally disabled for this phase.
           </div>
         </section>
       </main>

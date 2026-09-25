@@ -43,3 +43,26 @@ export const updateCaseStatus = async (caseId: string, status: string): Promise<
 
   return response.json();
 };
+
+export const uploadDocument = async (caseId: string, file: File): Promise<any> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  
+  const response = await fetch(`${API_BASE_URL}/cases/${caseId}/documents`, {
+    method: 'POST',
+    body: formData,
+  });
+  
+  if (!response.ok) {
+    let errorMessage = 'Failed to upload document';
+    try {
+      const errorData = await response.json();
+      if (errorData.detail) errorMessage = errorData.detail;
+    } catch {
+      // Ignore JSON parse error on non-JSON response
+    }
+    throw new Error(errorMessage);
+  }
+  
+  return response.json();
+};
