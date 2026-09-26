@@ -22,9 +22,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from sqlalchemy import text
+from app.core.database import get_db
+from fastapi import Depends
+from sqlalchemy.orm import Session
+
 @app.get("/api/v1/health")
 def health_check():
     return {"status": "ok"}
+
+@app.get("/api/v1/health/db")
+def db_health_check(db: Session = Depends(get_db)):
+    try:
+        result = db.execute(text("SELECT 1")).scalar()
+        return {"db_status": "ok", "result": result}
+    except Exception as e:
+        return {"db_status": "error", "message": "Connection failed"}
 
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
 app.include_router(cases.router, prefix="/api/v1/cases", tags=["cases"])
