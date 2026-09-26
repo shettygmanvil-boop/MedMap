@@ -15,6 +15,8 @@ if raw_url.startswith("postgresql://"):
     DATABASE_URL = raw_url.replace("postgresql://", "postgresql+pg8000://", 1)
 elif raw_url.startswith("postgresql+psycopg2://"):
     DATABASE_URL = raw_url.replace("postgresql+psycopg2://", "postgresql+pg8000://", 1)
+elif raw_url.startswith("postgres://"):
+    DATABASE_URL = raw_url.replace("postgres://", "postgresql+pg8000://", 1)
 else:
     DATABASE_URL = raw_url
 
