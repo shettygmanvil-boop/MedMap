@@ -13,6 +13,7 @@ from app.models.case import ClinicalCase
 from app.models.document import PatientDocument
 from app.services.document_service import upload_document, get_documents
 from datetime import datetime, timezone
+import time
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 engine = create_engine(
@@ -109,6 +110,8 @@ class DocumentTests(unittest.TestCase):
         file_content1 = b"fake pdf 1"
         file1 = self.create_upload_file("test1.pdf", file_content1, "application/pdf")
         upload_document(self.db, "test-case", file1)
+        
+        time.sleep(0.01)
         
         file_content2 = b"fake pdf 2"
         file2 = self.create_upload_file("test2.pdf", file_content2, "application/pdf")

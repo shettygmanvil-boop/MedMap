@@ -1,12 +1,18 @@
 import type { ClinicalCase } from '../types/case';
 
-const API_BASE_URL = 'http://localhost:8000/api/v1';
+export const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1').replace(/\/+$/, '');
+
+const getAuthHeaders = (): Record<string, string> => {
+  const token = localStorage.getItem('medmap_token');
+  return token ? { 'Authorization': `Bearer ${token}` } : {};
+};
 
 export const createCase = async (patientId: string, language?: string, consentGranted?: boolean): Promise<ClinicalCase> => {
   const response = await fetch(`${API_BASE_URL}/cases`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      ...getAuthHeaders(),
     },
     body: JSON.stringify({ patientId, language, consentGranted }),
   });
@@ -15,12 +21,23 @@ export const createCase = async (patientId: string, language?: string, consentGr
     throw new Error('Failed to create case');
   }
 
-  return response.json();
+  const data = await response.json();
+  if (data.token) {
+    localStorage.setItem('medmap_token', data.token);
+  }
+  return data.case;
 };
 
 export const getCase = async (caseId: string): Promise<ClinicalCase> => {
-  const response = await fetch(`${API_BASE_URL}/cases/${caseId}`);
+  const response = await fetch(`${API_BASE_URL}/cases/${caseId}`, {
+    headers: {
+      ...getAuthHeaders(),
+    },
+  });
 
+  if (response.status === 401 || response.status === 403) {
+    throw new Error('Unauthorized');
+  }
   if (!response.ok) {
     throw new Error('Failed to load case');
   }
@@ -37,6 +54,7 @@ export const updateCase = async (caseId: string, data: Partial<ClinicalCase>): P
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
+      ...getAuthHeaders(),
     },
     body: JSON.stringify(data),
   });
@@ -54,6 +72,9 @@ export const uploadDocument = async (caseId: string, file: File): Promise<any> =
   
   const response = await fetch(`${API_BASE_URL}/cases/${caseId}/documents`, {
     method: 'POST',
+    headers: {
+      ...getAuthHeaders(),
+    },
     body: formData,
   });
   
@@ -72,7 +93,14 @@ export const uploadDocument = async (caseId: string, file: File): Promise<any> =
 };
 
 export const getCases = async (): Promise<ClinicalCase[]> => {
-  const response = await fetch(`${API_BASE_URL}/cases`);
+  const response = await fetch(`${API_BASE_URL}/cases`, {
+    headers: {
+      ...getAuthHeaders(),
+    },
+  });
+  if (response.status === 401 || response.status === 403) {
+    throw new Error('Unauthorized');
+  }
   if (!response.ok) {
     throw new Error('Failed to load cases');
   }
@@ -80,7 +108,11 @@ export const getCases = async (): Promise<ClinicalCase[]> => {
 };
 
 export const getCaseDocuments = async (caseId: string): Promise<any[]> => {
-  const response = await fetch(`${API_BASE_URL}/cases/${caseId}/documents`);
+  const response = await fetch(`${API_BASE_URL}/cases/${caseId}/documents`, {
+    headers: {
+      ...getAuthHeaders(),
+    },
+  });
   if (!response.ok) {
     throw new Error('Failed to load case documents');
   }

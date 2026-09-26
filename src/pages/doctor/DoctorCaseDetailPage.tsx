@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { DoctorCaseStatusBadge } from '../../components/doctor/DoctorCaseStatusBadge';
 import { DoctorSectionCard } from '../../components/doctor/DoctorSectionCard';
-import { getCase, getCaseDocuments } from '../../utils/api';
+import { getCase, getCaseDocuments, updateCase } from '../../utils/api';
 import type { ClinicalCase } from '../../types/case';
 import { ErrorMessage } from '../../components/ErrorMessage';
+import { Button } from '../../components/Button';
+import { useNavigate } from 'react-router-dom';
 import '../../components/doctor/doctorDashboard.css';
 import '../../components/doctor/doctorDetail.css';
 
@@ -14,6 +16,9 @@ export function DoctorCaseDetailPage() {
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isCompleting, setIsCompleting] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!caseId) {
@@ -31,6 +36,10 @@ export function DoctorCaseDetailPage() {
         setCaseDetail(data);
         setDocuments(docs);
       } catch (err: any) {
+        if (err.message === 'Unauthorized') {
+          navigate('/doctor/login');
+          return;
+        }
         setError(err.message || 'Case Record Not Found');
       } finally {
         setLoading(false);
@@ -38,7 +47,25 @@ export function DoctorCaseDetailPage() {
     };
 
     fetchCase();
-  }, [caseId]);
+  }, [caseId, navigate]);
+
+  const handleCompleteCase = async () => {
+    if (!caseId) return;
+    setIsCompleting(true);
+    setActionError(null);
+    try {
+      const updatedCase = await updateCase(caseId, { status: 'completed' });
+      setCaseDetail(updatedCase);
+    } catch (err: any) {
+      if (err.message === 'Unauthorized') {
+        navigate('/doctor/login');
+        return;
+      }
+      setActionError(err.message || 'Failed to complete case.');
+    } finally {
+      setIsCompleting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -193,6 +220,29 @@ export function DoctorCaseDetailPage() {
 
         {/* Right Column: Physician Review Panel & Sidebar Summary */}
         <aside className="detail-sidebar-column" aria-label="Physician Actions and Metadata">
+          {actionError && (
+            <div style={{ marginBottom: '1.5rem' }}>
+              <ErrorMessage message={actionError} onDismiss={() => setActionError(null)} />
+            </div>
+          )}
+
+          {caseDetail.status === 'doctor_review' && (
+            <div className="clinical-section-card" style={{ padding: '1.25rem', marginBottom: '1.5rem' }}>
+              <h3 style={{ fontFamily: 'var(--font-hand)', fontSize: '1.25rem', margin: '0 0 0.75rem' }}>
+                Actions
+              </h3>
+              <Button 
+                variant="primary" 
+                style={{ width: '100%', backgroundColor: 'var(--color-verify)', borderColor: 'var(--color-verify)' }}
+                onClick={handleCompleteCase}
+                isLoading={isCompleting}
+                disabled={isCompleting}
+              >
+                {isCompleting ? 'Completing...' : '✓ Mark as Completed'}
+              </Button>
+            </div>
+          )}
+
           {/* Case Metadata Panel */}
           <div className="clinical-section-card" style={{ padding: '1.25rem' }}>
             <h3 style={{ fontFamily: 'var(--font-hand)', fontSize: '1.25rem', margin: '0 0 0.75rem' }}>

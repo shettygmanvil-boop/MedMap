@@ -8,6 +8,7 @@ import { ErrorMessage } from '../../components/ErrorMessage';
 export function PatientOnboardingPage() {
   const [patientId, setPatientId] = useState('');
   const [language, setLanguage] = useState('English');
+  const [hasConsent, setHasConsent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -20,12 +21,12 @@ export function PatientOnboardingPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!patientId.trim()) return;
+    if (!patientId.trim() || !hasConsent) return;
 
     setIsLoading(true);
     setError(null);
     try {
-      const newCase = await createCase(patientId, language, true);
+      const newCase = await createCase(patientId, language, hasConsent);
       setCaseId(newCase.caseId);
       navigate('/patient/intake');
     } catch (err) {
@@ -68,14 +69,28 @@ export function PatientOnboardingPage() {
               style={{ width: '100%', padding: '0.5rem' }}
             >
               <option value="English">English</option>
-              <option value="Spanish">Spanish</option>
-              <option value="French">French</option>
+              <option value="Hindi">Hindi</option>
+              <option value="Kannada">Kannada</option>
             </select>
+          </div>
+          <div>
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', cursor: 'pointer' }}>
+              <input 
+                type="checkbox" 
+                checked={hasConsent}
+                onChange={(e) => setHasConsent(e.target.checked)}
+                required
+                style={{ marginTop: '0.25rem' }}
+              />
+              <span style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>
+                I understand that MedMap will collect my health information during this intake process to prepare my case for clinical consultation. I agree to proceed.
+              </span>
+            </label>
           </div>
           <Button
             type="submit" 
             isLoading={isLoading}
-            disabled={isLoading}
+            disabled={isLoading || !hasConsent}
             style={{ width: '100%' }}
           >
             {isLoading ? 'Creating case...' : 'Start Intake'}

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 
 interface CaseContextType {
   caseId: string | null;
@@ -12,14 +12,14 @@ export const CaseProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return sessionStorage.getItem('activeCaseId');
   });
 
-  const setCaseId = (id: string | null) => {
+  const setCaseId = useCallback((id: string | null) => {
     setCaseIdState(id);
     if (id) {
       sessionStorage.setItem('activeCaseId', id);
     } else {
       sessionStorage.removeItem('activeCaseId');
     }
-  };
+  }, []);
 
   return (
     <CaseContext.Provider value={{ caseId, setCaseId }}>

@@ -11,6 +11,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from app.models.base import Base
 from app.models.case import ClinicalCase
 from app.models.document import PatientDocument
+from app.models.user import User
 from app.core.database import DATABASE_URL
 
 # this is the Alembic Config object, which provides

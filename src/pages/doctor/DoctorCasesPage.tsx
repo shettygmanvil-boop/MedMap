@@ -6,6 +6,7 @@ import { DoctorCaseCard } from '../../components/doctor/DoctorCaseCard';
 import { getCases } from '../../utils/api';
 import type { ClinicalCase } from '../../types/case';
 import { ErrorMessage } from '../../components/ErrorMessage';
+import { useNavigate } from 'react-router-dom';
 import '../../components/doctor/doctorDashboard.css';
 
 function calculateCaseCounts(cases: ClinicalCase[]): CaseCounts {
@@ -22,6 +23,7 @@ export function DoctorCasesPage() {
   const [cases, setCases] = useState<ClinicalCase[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchCases = async () => {
@@ -30,13 +32,17 @@ export function DoctorCasesPage() {
         setCases(data);
         setError(null);
       } catch (err: any) {
+        if (err.message === 'Unauthorized') {
+          navigate('/doctor/login');
+          return;
+        }
         setError(err.message || 'Failed to load cases.');
       } finally {
         setLoading(false);
       }
     };
     fetchCases();
-  }, []);
+  }, [navigate]);
 
   const counts = useMemo(() => calculateCaseCounts(cases), [cases]);
 
@@ -73,7 +79,7 @@ export function DoctorCasesPage() {
           <div>
             <h1 className="doctor-page-title">Pre-Consultation Cases</h1>
             <p className="doctor-page-subtitle">
-              Review AI-structured clinical briefs and patient-verified histories before consultation.
+              Review patient-verified intake responses and uploaded clinical documents before consultation.
             </p>
           </div>
         </div>

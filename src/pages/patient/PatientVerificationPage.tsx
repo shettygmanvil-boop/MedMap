@@ -38,8 +38,29 @@ export function PatientVerificationPage() {
       navigate('/patient');
       return;
     }
-    loadCase();
+    
+    // Load case and automatically transition to patient_verifying if needed
+    const initCase = async () => {
+      await loadCase();
+    };
+    initCase();
   }, [caseId, navigate, loadCase]);
+
+  // Effect to handle automatic transition to patient_verifying when the page is viewed
+  useEffect(() => {
+    if (clinicalCase && clinicalCase.status === 'intake' && !isUpdating) {
+      const transitionToVerifying = async () => {
+        try {
+          const updated = await updateCaseStatus(caseId!, 'patient_verifying');
+          setClinicalCase(updated);
+        } catch (err: any) {
+          console.error("Failed to update status to patient_verifying", err);
+          setUpdateError(err.message || "Failed to initialize verification. Please refresh the page.");
+        }
+      };
+      transitionToVerifying();
+    }
+  }, [clinicalCase, caseId, isUpdating]);
 
   const handleConfirm = async () => {
     if (!caseId || !clinicalCase) return;
