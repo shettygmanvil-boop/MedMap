@@ -1,6 +1,7 @@
 import os
 import uuid
 import shutil
+import requests
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from fastapi import UploadFile, HTTPException
@@ -27,29 +28,46 @@ def upload_document(db: Session, case_id: str, file: UploadFile) -> DocumentResp
     if ext not in ALLOWED_EXTENSIONS or file.content_type not in ALLOWED_MIMES:
         raise HTTPException(status_code=400, detail="Unsupported file format")
 
-    # Save file temporarily to check size and keep it
-    os.makedirs(UPLOAD_DIR, exist_ok=True)
     doc_id = str(uuid.uuid4())
     safe_filename = f"{doc_id}{ext}"
-    storage_path = os.path.join(UPLOAD_DIR, safe_filename)
 
-    # Read and validate size
+    # Read and validate size in memory
     size_bytes = 0
-    with open(storage_path, "wb") as buffer:
-        while True:
-            chunk = file.file.read(8192)
-            if not chunk:
-                break
-            size_bytes += len(chunk)
-            if size_bytes > MAX_SIZE:
-                buffer.close()
-                os.remove(storage_path)
-                raise HTTPException(status_code=400, detail="File too large")
-            buffer.write(chunk)
+    file_content = b""
+    while True:
+        chunk = file.file.read(8192)
+        if not chunk:
+            break
+        size_bytes += len(chunk)
+        if size_bytes > MAX_SIZE:
+            raise HTTPException(status_code=400, detail="File too large")
+        file_content += chunk
     
     if size_bytes == 0:
-        os.remove(storage_path)
         raise HTTPException(status_code=400, detail="Empty file")
+
+    blob_token = os.getenv("BLOB_READ_WRITE_TOKEN")
+    
+    if blob_token:
+        # Vercel Blob Storage (Private)
+        blob_api_url = f"https://blob.vercel-storage.com/{safe_filename}"
+        headers = {
+            "authorization": f"Bearer {blob_token}",
+            "x-api-version": "7",
+            "x-access": "private",
+            "x-content-type": file.content_type
+        }
+        resp = requests.put(blob_api_url, headers=headers, data=file_content)
+        if not resp.ok:
+            raise HTTPException(status_code=500, detail="Failed to upload document to cloud storage")
+        blob_url = resp.json().get("url")
+        storage_path = blob_url
+    else:
+        # Local Fallback
+        os.makedirs(UPLOAD_DIR, exist_ok=True)
+        storage_path = os.path.join(UPLOAD_DIR, safe_filename)
+        with open(storage_path, "wb") as f:
+            f.write(file_content)
 
     # Create DB record
     db_doc = PatientDocument(
@@ -68,7 +86,8 @@ def upload_document(db: Session, case_id: str, file: UploadFile) -> DocumentResp
         db.refresh(db_doc)
     except Exception as e:
         db.rollback()
-        if os.path.exists(storage_path):
+        # Clean up local file if it was a local upload
+        if not blob_token and os.path.exists(storage_path):
             os.remove(storage_path)
         raise e
 

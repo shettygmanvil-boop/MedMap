@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
+from sqlalchemy.pool import NullPool
 
 load_dotenv()
 from sqlalchemy.orm import sessionmaker
@@ -10,7 +11,7 @@ DATABASE_URL = os.getenv(
     "postgresql+psycopg2://postgres:PASSWORD_PLACEHOLDER@localhost:5432/medmap"
 )
 
-engine = create_engine(DATABASE_URL)
+engine = create_engine(DATABASE_URL, poolclass=NullPool)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def get_db():
