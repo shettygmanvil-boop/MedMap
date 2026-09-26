@@ -6,10 +6,15 @@ from sqlalchemy.pool import NullPool
 load_dotenv()
 from sqlalchemy.orm import sessionmaker
 
-raw_url = os.getenv("MEDMAP_DATABASE_URL") or os.getenv(
-    "DATABASE_URL",
-    "postgresql://postgres:PASSWORD_PLACEHOLDER@localhost:5432/medmap"
-)
+db_url = os.getenv("DATABASE_URL")
+medmap_url = os.getenv("MEDMAP_DATABASE_URL")
+
+if db_url and db_url.startswith("postgres"):
+    raw_url = db_url
+elif medmap_url and medmap_url.startswith("postgres"):
+    raw_url = medmap_url
+else:
+    raw_url = db_url or "postgresql://postgres:PASSWORD_PLACEHOLDER@localhost:5432/medmap"
 
 if raw_url.startswith("postgresql://"):
     DATABASE_URL = raw_url.replace("postgresql://", "postgresql+pg8000://", 1)
