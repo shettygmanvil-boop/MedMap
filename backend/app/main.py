@@ -37,7 +37,14 @@ def db_health_check(db: Session = Depends(get_db)):
         result = db.execute(text("SELECT 1")).scalar()
         return {"db_status": "ok", "result": result}
     except Exception as e:
-        return {"db_status": "error", "message": "Connection failed"}
+        import re
+        safe_msg = re.sub(r"://[^@]+@[^/]+", "://***:***@***", str(e))
+        return {
+            "db_status": "error",
+            "message": "Connection failed",
+            "exception_type": type(e).__name__,
+            "exception_msg": safe_msg
+        }
 
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
 app.include_router(cases.router, prefix="/api/v1/cases", tags=["cases"])
