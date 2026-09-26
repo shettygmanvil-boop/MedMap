@@ -20,6 +20,8 @@ elif raw_url.startswith("postgres://"):
 else:
     DATABASE_URL = raw_url
 
+DATABASE_URL = DATABASE_URL.replace("sslmode=require", "ssl_context=true")
+
 engine = create_engine(DATABASE_URL, poolclass=NullPool)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
